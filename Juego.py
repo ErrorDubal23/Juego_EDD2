@@ -20,6 +20,8 @@ import os
 def reiniciar_juego():
     global jugador, all_sprites, enemigos, gemas_sprites, estado
     jugador = Jugador(50, ALTURA_VENTANA - 200)
+
+    jugador.gemas.eliminarGemasPostorden()
     # Ejecutar demo de 20 eventos (se muestra en mensajes). Puedes comentar esta línea si no quieres que se ejecute automáticamente.
     ejecutar_eventos_demo(jugador.gemas, agregar_mensaje)
     all_sprites = pygame.sprite.Group(); all_sprites.add(jugador)
@@ -341,7 +343,8 @@ while running:
                     elif mods & pygame.KMOD_SHIFT:
                         guardar_inventario(jugador, slot)
                         print(f"Inventario guardado en slot {slot}")
-
+                if evento.key == pygame.K_r:
+                    jugador.gemas.eliminarGemasPostorden()
                 if evento.key == pygame.K_TAB:
                     inventario_abierto = not inventario_abierto
                 if evento.key in (pygame.K_w, pygame.K_SPACE):

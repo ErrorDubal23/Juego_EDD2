@@ -114,6 +114,16 @@ class ArbolBST:
         self._postorden(nodo.right, res)
         res.append((nodo.poder, nodo.nombre))
 
+    def eliminarGemasPostorden(self):
+        def postorden_borrar(nodo):
+            if nodo is None:
+                return
+            postorden_borrar(nodo.left)
+            postorden_borrar(nodo.right)
+            self.eliminar(nodo.poder) 
+        
+        postorden_borrar(self.root)
+
     def _to_list_nodes(self, nodo, arr):
         if not nodo: return
         self._to_list_nodes(nodo.left, arr)
