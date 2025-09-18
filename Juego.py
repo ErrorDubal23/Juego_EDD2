@@ -64,6 +64,8 @@ for x, y, w in pos_plat:
     plataformas.append(p)
     grupo_plataformas.add(p)
 
+inventario_abierto = False
+
 # COFRES 
 cofres = pygame.sprite.Group()
 cofres.add(Cofre(950, 380, tipo='gema', valor=30))       # sobre plataforma media
@@ -128,7 +130,7 @@ enemigos = pygame.sprite.Group()
 spawn_timer = 0
 
 # FONDO
-fondo = pygame.image.load("/Users/dubalaguilar/Downloads/Proyecto_EDD2_modificado (2)/imagenes/Background.png").convert()
+fondo = pygame.image.load("imagenes/Background.png").convert()
 ancho_fondo, alto_fondo = fondo.get_size()
 
 #  JUGADOR Y CÁMARA 
@@ -186,6 +188,69 @@ def dibujar_vidas(pantalla, jugador, cam):
         x = 12 + i*22; y = 12
         pantalla.blit(ICONO_VIDA, (x - cam.x, y))
 
+def dibujar_inventario(superficie, inventario, fuente):
+    
+    columnas = 4   # cantidad de slots por fila
+    slot_size = 100
+    padding = 10
+
+    # Calcular tamaño del inventario
+    filas = (len(inventario) + columnas - 1) // columnas
+    ancho = columnas * (slot_size + padding) + padding
+    alto = filas * (slot_size + padding) + 60  
+
+    rect = pygame.Rect(ANCHO_VENTANA//2 - ancho//2,
+                       ALTURA_VENTANA//2 - alto//2,
+                       ancho, alto)
+
+   
+    s = pygame.Surface((ancho, alto), pygame.SRCALPHA)
+    s.fill((20, 20, 20, 220))  
+    superficie.blit(s, rect.topleft)
+
+    
+    pygame.draw.rect(superficie, (200, 200, 200), rect, 3, border_radius=12)
+
+   
+    titulo = fuente.render("Inventario", True, (255, 215, 0))
+    superficie.blit(titulo, (rect.x + 10, rect.y + 10))
+
+    
+    def draw_text_centered(text, font, color, rect, y_offset=0):
+        max_width = rect.width - 8  
+        txt_surface = font.render(text, True, color)
+
+       
+        while txt_surface.get_width() > max_width and len(text) > 1:
+            text = text[:-2] + "…"   
+            txt_surface = font.render(text, True, color)
+
+        superficie.blit(txt_surface, (rect.centerx - txt_surface.get_width()//2, rect.y + y_offset))
+
+    
+    start_y = rect.y + 50
+    for i, linea in enumerate(inventario):
+        fila = i // columnas
+        col = i % columnas
+        x = rect.x + padding + col * (slot_size + padding)
+        y = start_y + fila * (slot_size + padding)
+
+        # Rectángulo del slot
+        slot_rect = pygame.Rect(x, y, slot_size, slot_size)
+        pygame.draw.rect(superficie, (50, 50, 50), slot_rect)  
+        pygame.draw.rect(superficie, (200, 200, 200), slot_rect, 2)  
+
+        
+        try:
+            poder, nombre = linea.split(":", 1)
+        except ValueError:
+            poder, nombre = linea, ""
+
+       
+        draw_text_centered(poder.strip(), fuente, (255, 255, 255), slot_rect, 5)
+       
+        draw_text_centered(nombre.strip(), fuente, (150, 200, 255), slot_rect, slot_size//2 - 8)
+
 
 # ESTADOS
 estado = MENU
@@ -223,6 +288,8 @@ while running:
             
 
             if evento.type == pygame.KEYDOWN:
+                if evento.key == pygame.K_TAB:
+                    inventario_abierto = not inventario_abierto
                 if evento.key in (pygame.K_w, pygame.K_SPACE):
                     jugador.saltar()
                 if evento.key == pygame.K_j:
@@ -464,6 +531,11 @@ while running:
 
     hud = FUENTE.render(f'Vidas: {jugador.vidas}   Puntos: {jugador.puntos}   Enemigos: {len(enemigos)}', True, BLANCO)
     PANTALLA.blit(hud, (30,30))
+    
+    if inventario_abierto:
+        inv = jugador.gemas.listar_inventario()
+        dibujar_inventario(PANTALLA, inv, FUENTE)
+
 
     pygame.display.flip()
 

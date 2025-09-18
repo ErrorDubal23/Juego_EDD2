@@ -186,3 +186,8 @@ class ArbolBST:
                 return prev
             prev = (p, n)
         return prev
+    
+    def listar_inventario(self):
+        #Devuelve lista de strings con las gemas en orden de poder.
+        gemas = self.inorden()
+        return [f"Poder {p}: {n}" for p, n in gemas]
