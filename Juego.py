@@ -46,7 +46,7 @@ for i in range(0, MAPA_ANCHO, 300):
 
 
 pos_plat = [
-    (400, 500, 160), (650, 460, 150), (950, 420, 180),
+    (400, 500, 160), (650, 460, 150), (920, 420, 180),
 
     (1300, 360, 140), (1500, 420, 120), (1700, 380, 160), (1900, 450, 100),
 
@@ -137,7 +137,7 @@ enemigos = pygame.sprite.Group()
 spawn_timer = 0
 
 # FONDO
-fondo = pygame.image.load("imagenes/Background.png").convert()
+fondo = pygame.image.load("/Users/dubalaguilar/Desktop/ Juego_EDD2_1/Juego_EDD2/imagenes/Background.png").convert()
 ancho_fondo, alto_fondo = fondo.get_size()
 
 #  JUGADOR Y CÁMARA 

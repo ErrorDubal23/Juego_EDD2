@@ -1,11 +1,11 @@
 import pygame
-
+import os 
 # ---------------- CONFIGURACIÓN ----------------
 ANCHO_VENTANA, ALTURA_VENTANA = 1100, 640
 FPS = 60
 GRAVEDAD = 0.6
 VELOCIDAD_JUGADOR = 3
-POTENCIA_SALTO = 16
+POTENCIA_SALTO = 12
 
 MAPA_ANCHO = 8000
 MARGEN_CAMARA = 220
@@ -44,4 +44,15 @@ pygame.draw.circle(ICONO_VIDA, (220,20,60), (9,6), 6)
 pygame.draw.circle(ICONO_VIDA, (220,20,60), (5,6), 6)
 pygame.draw.polygon(ICONO_VIDA, (220,20,60), [(2,10),(9,16),(16,10)])
 
-
+def cargar_animacion(ruta_carpeta, escala=None):
+    frames = []
+    for nombre in sorted(os.listdir(ruta_carpeta)):
+        if nombre.endswith(".png"):
+            img = pygame.image.load(os.path.join(ruta_carpeta, nombre)).convert_alpha()
+            # recorta bordes transparentes
+            recorte = img.get_bounding_rect()
+            img = img.subsurface(recorte)
+            if escala:
+                img = pygame.transform.scale(img, escala)
+            frames.append(img)
+    return frames
