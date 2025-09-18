@@ -11,6 +11,8 @@ from ArbolBST import ArbolBST
 from Eventos import ejecutar_eventos_demo
 from Vidas import *
 from Enemigo import Enemigo
+
+import json
 import sys
 import os
 # C
@@ -64,7 +66,10 @@ for x, y, w in pos_plat:
     plataformas.append(p)
     grupo_plataformas.add(p)
 
-inventario_abierto = False
+inventario_abierto = False # Estado del inventario
+
+SAVE_FOLDER = "saves"
+
 
 # COFRES 
 cofres = pygame.sprite.Group()
@@ -251,6 +256,34 @@ def dibujar_inventario(superficie, inventario, fuente):
        
         draw_text_centered(nombre.strip(), fuente, (150, 200, 255), slot_rect, slot_size//2 - 8)
 
+def guardar_inventario(jugador, slot=1):
+    
+    if not os.path.exists(SAVE_FOLDER):
+        os.makedirs(SAVE_FOLDER)
+
+    datos = jugador.gemas.preorden()  # lista de (poder, nombre)
+    ruta = os.path.join(SAVE_FOLDER, f"save{slot}.json")
+    with open(ruta, "w", encoding="utf-8") as f:
+        json.dump(datos, f, indent=2)
+
+    agregar_mensaje(f"Inventario guardado en slot {slot}", 1500)
+
+
+def cargar_inventario(jugador, slot=1):
+    
+    ruta = os.path.join(SAVE_FOLDER, f"save{slot}.json")
+    if not os.path.exists(ruta):
+        agregar_mensaje(f"No hay guardado en slot {slot}", 1500)
+        return
+
+    with open(ruta, "r", encoding="utf-8") as f:
+        datos = json.load(f)
+
+    jugador.gemas = ArbolBST()  # reiniciar árbol
+    for poder, nombre in datos:
+        jugador.gemas.insertar(poder, nombre)
+
+    agregar_mensaje(f"Inventario cargado desde slot {slot}", 1500)
 
 # ESTADOS
 estado = MENU
@@ -288,6 +321,27 @@ while running:
             
 
             if evento.type == pygame.KEYDOWN:
+                mods = pygame.key.get_mods()
+
+                # Para que cuando de shift 1 no se detecte como ! y lo mismo con los demas
+                teclas_a_slots = {
+                    pygame.K_1: 1,
+                    pygame.K_2: 2,
+                    pygame.K_3: 3,
+                    pygame.K_4: 4,
+                    pygame.K_5: 5
+                }
+
+                if evento.key in teclas_a_slots:
+                    slot = teclas_a_slots[evento.key]
+
+                    if mods & pygame.KMOD_CTRL:
+                        cargar_inventario(jugador, slot)
+                        print(f"Inventario cargado desde slot {slot}")
+                    elif mods & pygame.KMOD_SHIFT:
+                        guardar_inventario(jugador, slot)
+                        print(f"Inventario guardado en slot {slot}")
+
                 if evento.key == pygame.K_TAB:
                     inventario_abierto = not inventario_abierto
                 if evento.key in (pygame.K_w, pygame.K_SPACE):
