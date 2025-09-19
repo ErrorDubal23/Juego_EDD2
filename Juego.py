@@ -74,14 +74,17 @@ SAVE_FOLDER = "saves"
 
 
 # COFRES 
+cofres_iniciales = [
+    (950, 380, 'gema', 30),        # sobre plataforma media
+    (2600, 240, 'minimo', None),   # difícil, requiere saltos
+    (3950, 400, 'vida', 2),        # recompensa en camino
+    (6600, 280, 'gema', 85),       # zona final, complicado
+    (2200, 380, 'habilidad', None),# da mejora velocidad/salto
+    (3200, 420, 'trampa', None)    # quita una gema aleatoria
+]
+
 cofres = pygame.sprite.Group()
-cofres.add(Cofre(950, 380, tipo='gema', valor=30))       # sobre plataforma media
-cofres.add(Cofre(2600, 240, tipo='minimo'))              # difícil, requiere saltos
-cofres.add(Cofre(3950, 400, tipo='vida', valor=2))       # recompensa en camino
-cofres.add(Cofre(6600, 280, tipo='gema', valor=85))      # zona final, complicado
-# cofres adicionales: trampa y habilidad
-cofres.add(Cofre(2200, 380, tipo='habilidad'))            # da una mejora de velocidad/salto
-cofres.add(Cofre(3200, 420, tipo='trampa'))               # quita una gema aleatoria (no la máxima)
+
 
 # GEMAS (colocadas de forma natural en el recorrido)
 gemas_sprites = pygame.sprite.Group()
@@ -137,7 +140,7 @@ enemigos = pygame.sprite.Group()
 spawn_timer = 0
 
 # FONDO
-fondo = pygame.image.load("/Users/dubalaguilar/Desktop/ Juego_EDD2_1/Juego_EDD2/imagenes/Background.png").convert()
+fondo = pygame.image.load("imagenes/Background.png").convert()
 ancho_fondo, alto_fondo = fondo.get_size()
 
 #  JUGADOR Y CÁMARA 
@@ -296,8 +299,10 @@ clock = pygame.time.Clock()
 FPS = 60
 
 def reset_cofres():
-    # FALTA ESTO PARA CUANDO SE REINICIA EL JUEGO
-    pass
+    global cofres
+    cofres.empty()  # eliminar cofres anteriores
+    for x, y, tipo, valor in cofres_iniciales:
+        cofres.add(Cofre(x, y, tipo=tipo, valor=valor))
 
 while running:
     

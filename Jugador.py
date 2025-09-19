@@ -10,8 +10,8 @@ class Jugador(pygame.sprite.Sprite):
         super().__init__()
 
         # Animaciones
-        self.anim_walk = cargar_animacion("/Users/dubalaguilar/Desktop/ Juego_EDD2_1/Personajes_juego_EDD2/Walk", (40,52))
-        self.anim_death = cargar_animacion("/Users/dubalaguilar/Desktop/ Juego_EDD2_1/Personajes_juego_EDD2/Death", (40,52))
+        self.anim_walk = cargar_animacion("Personajes_juego_EDD2/Walk", (40,52))
+        self.anim_death = cargar_animacion("Personajes_juego_EDD2/Death", (40,52))
 
         self.frame_index = 0
         self.image = self.anim_walk[self.frame_index]
