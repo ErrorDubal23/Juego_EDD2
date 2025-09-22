@@ -3,16 +3,7 @@ from Configuraciones import *
 
 
 class Jefe(pygame.sprite.Sprite):
-    """Clase Jefe (separada de Enemigo).
-
-    - required_power: el poder que el jefe solicita al jugador.
-    - reward_power: la gema que entrega al ser satisfecho.
-
-    Método interact(jugador): intenta recibir la gema del jugador. Si el jugador
-    tiene la gema (o la gema elegida por sucesor/predecesor), la consume, entrega
-    la gema de recompensa al árbol de gemas del jugador y marca al jefe como derrotado.
-    Devuelve una tupla (aceptada: bool, mensaje: str).
-    """
+   
     def __init__(self, x, y, required_power=120, reward_power=999, w=120, h=160):
         super().__init__()
         self.image = pygame.Surface((w, h))
@@ -25,19 +16,14 @@ class Jefe(pygame.sprite.Sprite):
         self.defeated = False
 
     def interact(self, jugador):
-        """Intentar entregar la gema al jefe.
-
-        Si el jugador tiene la gema exacta requerida, la consume y devuelve la gema
-        de recompensa al jugador. Si no tiene la exacta, intenta elegir sucesor o predecesor
-        (misma lógica que el Juego original). Si no tiene ninguna gema, devuelve False.
-        """
+        
         if self.defeated:
             return (False, 'Jefe ya está satisfecho')
 
         requerido = self.required_power
         nodo = jugador.gemas.buscar(requerido)
         if nodo:
-            # gema exacta
+            
             jugador.gemas.eliminar(requerido)
             jugador.gemas.insertar(self.reward_power, 'Gema del Jefe', self.rect.centerx, self.rect.centery)
             self.defeated = True
@@ -46,7 +32,7 @@ class Jefe(pygame.sprite.Sprite):
             suc = jugador.gemas.sucesor(requerido)
             pre = jugador.gemas.predecesor(requerido)
             elegido = None
-            # elegir la gema más cercana en valor
+            
             if suc and pre:
                 elegido = suc if abs(suc[0] - requerido) < abs(pre[0] - requerido) else pre
             else:
@@ -65,20 +51,7 @@ class Jefe(pygame.sprite.Sprite):
 
 
 class ParedDivisible:
-    """Una pared que bloquea visualmente y físicamente el paso hasta que se abra.
-
-    Comportamiento:
-      - Cuando está cerrada (closed=True) bloquea el paso: colliderect devuelve True.
-      - Cuando se inicia la apertura (start_opening), las dos mitades (superior e inferior)
-        se separan verticalmente: la superior sube y la inferior baja (como una puerta automática
-        pero en horizontal - es decir, la linea de separaciÃ³n es horizontal).
-      - La pared se dibuja en coordenadas del mundo (usa camara.aplicar para dibujar).
-
-    Parámetros:
-      x: coordenada horizontal (mundo) donde empieza la pared.
-      width: ancho de la pared en pixeles (normalmente hasta el portal o hasta el final del pasillo).
-      altura: se toma de ALTURA_VENTANA para que cubra toda la pantalla verticalmente.
-    """
+   
     def __init__(self, x, width, altura=ALTURA_VENTANA, color=(30, 30, 30), speed=8):
         # la pared ocupará verticalmente toda la ventana por defecto
         self.x = int(x)

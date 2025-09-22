@@ -23,7 +23,7 @@ def reiniciar_juego():
     jugador = Jugador(50, ALTURA_VENTANA - 200)
 
     jugador.gemas.eliminarGemasPostorden()
-    # Ejecutar demo de 20 eventos (se muestra en mensajes). Puedes comentar esta línea si no quieres que se ejecute automáticamente.
+    # Ejecutar demo de 20 eventos.
     ejecutar_eventos_demo(jugador.gemas, agregar_mensaje)
     all_sprites = pygame.sprite.Group(); all_sprites.add(jugador)
     enemigos = pygame.sprite.Group()
@@ -43,7 +43,7 @@ def reiniciar_juego():
 plataformas = []
 grupo_plataformas = pygame.sprite.Group()
 
-# Suelo base (cada 300 px) → transparente
+# Suelo base 
 for i in range(0, MAPA_ANCHO, 300):
     p = Plataforma(i, ALTURA_VENTANA - 40, 300, 40, transparente=True)
     plataformas.append(p)
@@ -69,7 +69,7 @@ pos_plat = [
     (6100, 260, 300), (6600, 320, 120), (6900, 360, 140)
 ]
 for x, y, w in pos_plat:
-    p = Plataforma(x, y, w, 20, color=(0, 0, 0))  # verde
+    p = Plataforma(x, y, w, 20, color=(0, 20, 0))  
     plataformas.append(p)
     grupo_plataformas.add(p)
 
@@ -91,7 +91,7 @@ cofres_iniciales = [
 cofres = pygame.sprite.Group()
 
 
-# GEMAS (colocadas de forma natural en el recorrido)
+# GEMAS
 gemas_sprites = pygame.sprite.Group()
 iniciales = [
     (80, ALTURA_VENTANA - 80, 50, 'Gema del Río'),
@@ -118,7 +118,7 @@ for x, y, poder, nombre in gemas_extra:
     g = GemaSprite(poder, nombre, x, y)
     gemas_sprites.add(g)
 
-# Verificación: gemas requeridas por cofres
+# Verificar gemas requeridas por cofres
 for c in list(cofres):
     if c.tipo == 'gema':
         existe = any(getattr(g, 'poder', None) == c.valor for g in gemas_sprites)
@@ -135,13 +135,13 @@ for c in list(cofres):
 portal_rect = pygame.Rect(7600, ALTURA_VENTANA - 200, 120, 160)
 
 # JEFE (configuración)
-boss_required_power = 120   # poder que pide el jefe (puede ajustarse)
-boss_reward_power = 999     # gema que entrega el jefe al ser derrotado (máxima)
+boss_required_power = 120   # poder que pide el jefe 
+boss_reward_power = 999     # gema que entrega el jefe al ser derrotado 
 
 # función para crear el jefe y la pared asociada
 def crear_boss_y_pared():
     global boss, wall
-    # crear Jefe (usa la clase importada). Ajusta tamaño/posición si es necesario.
+    # crear Jefe.
     boss = Jefe(6980, ALTURA_VENTANA - 200, required_power=boss_required_power, reward_power=boss_reward_power, w=120, h=160)
     # la pared queda justo a la derecha del boss y se extiende hasta el portal
     width = max(300, portal_rect.left - boss.rect.right)
@@ -218,12 +218,6 @@ def dibujar_game_over():
     PANTALLA.blit(t2, (ANCHO_VENTANA//2 - t2.get_width()//2, ALTURA_VENTANA//2))
     pygame.display.flip()
 
-def dibujar_vidas(pantalla, jugador, cam):
-    # dibuja las vidas (corazones) en HUD relativo a camara
-    for i in range(jugador.vidas):
-        x = 12 + i*22; y = 12
-        pantalla.blit(ICONO_VIDA, (x - cam.x, y))
-
 def dibujar_inventario(superficie, inventario, fuente):
     
     columnas = 4   # cantidad de slots por fila
@@ -292,7 +286,7 @@ def guardar_inventario(jugador, slot=1):
     if not os.path.exists(SAVE_FOLDER):
         os.makedirs(SAVE_FOLDER)
 
-    datos = jugador.gemas.preorden()  # lista de (poder, nombre)
+    datos = jugador.gemas.preorden()  
     ruta = os.path.join(SAVE_FOLDER, f"save{slot}.json")
     with open(ruta, "w", encoding="utf-8") as f:
         json.dump(datos, f, indent=2)
@@ -437,13 +431,13 @@ while running:
 
                     #  interacción con el jefe 
                     if jugador.rect.colliderect(boss.rect) and not getattr(boss, 'defeated', False) and not interacted:
-                        # usar el método interact si existe
+                       
                         mensaje = ''
                         aceptado = False
                         try:
                             aceptado, mensaje = boss.interact(jugador)
                         except Exception:
-                            # fallback a la lógica previa si la clase Jefe no implementa interact de la misma forma
+                            
                             requerido = boss_required_power
                             nodo = jugador.gemas.buscar(requerido)
                             if nodo:
@@ -488,7 +482,7 @@ while running:
                             agregar_mensaje(mensaje, 1800)
                         interacted = True
 
-                    # Portal: ahora requiere la gema que entrega el jefe (boss_reward_power)
+                    # Portal ahora requiere la gema que entrega el jefe 
                     if jugador.rect.colliderect(portal_rect) and not interacted:
                         required = getattr(boss, 'reward_power', boss_reward_power)
                         if jugador.gemas.buscar(required):
