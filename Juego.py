@@ -11,11 +11,12 @@ from ArbolBST import ArbolBST
 from Eventos import ejecutar_eventos_demo
 from Vidas import *
 from Enemigo import Enemigo
-
+from Boss_and_Barrier_proposal import Jefe, ParedDivisible
 import json
 import sys
 import os
-# C
+
+
 # reiniciar la partida 
 def reiniciar_juego():
     global jugador, all_sprites, enemigos, gemas_sprites, estado
@@ -32,15 +33,19 @@ def reiniciar_juego():
     for x,y,poder,nombre in gemas_extra:
         gemas_sprites.add(GemaSprite(poder, nombre, x, y))
     reset_cofres()
+
+    # recrear jefe y pared al reiniciar
+    crear_boss_y_pared()
+
     estado = JUGANDO
 
 # PLATAFORMAS
 plataformas = []
 grupo_plataformas = pygame.sprite.Group()
 
-# Suelo base (cada 300 px)
+# Suelo base (cada 300 px) → transparente
 for i in range(0, MAPA_ANCHO, 300):
-    p = Plataforma(i, ALTURA_VENTANA - 40, 300, 40)
+    p = Plataforma(i, ALTURA_VENTANA - 40, 300, 40, transparente=True)
     plataformas.append(p)
     grupo_plataformas.add(p)
 
@@ -48,9 +53,9 @@ for i in range(0, MAPA_ANCHO, 300):
 pos_plat = [
     (400, 500, 160), (650, 460, 150), (920, 420, 180),
 
-    (1300, 360, 140), (1500, 420, 120), (1700, 380, 160), (1900, 450, 100),
+    (1100, 360, 200), (1410, 420, 180), (1700, 380, 160), (1900, 450, 100),
 
-    (2300, 320, 140), (2500, 280, 120), (2700, 340, 100),
+    (2050, 420, 390), (2500, 280, 120), (2700, 340, 100),
 
     (3000, 500, 400),
 
@@ -61,10 +66,10 @@ pos_plat = [
 
     (5000, 420, 120), (5200, 360, 160), (5400, 300, 140),
     (5700, 340, 120), (5900, 400, 180),
-    (6300, 280, 140), (6600, 320, 120), (6900, 360, 140)
+    (6100, 260, 300), (6600, 320, 120), (6900, 360, 140)
 ]
 for x, y, w in pos_plat:
-    p = Plataforma(x, y, w, 20)
+    p = Plataforma(x, y, w, 20, color=(0, 0, 0))  # verde
     plataformas.append(p)
     grupo_plataformas.add(p)
 
@@ -129,18 +134,39 @@ for c in list(cofres):
 # PORTAL 
 portal_rect = pygame.Rect(7600, ALTURA_VENTANA - 200, 120, 160)
 
-# JEFE (bloquea el paso hasta entregar una gema)
-boss_rect = pygame.Rect(7000, ALTURA_VENTANA - 200, 120, 160)
+# JEFE (configuración)
 boss_required_power = 120   # poder que pide el jefe (puede ajustarse)
-boss_defeated = False
 boss_reward_power = 999     # gema que entrega el jefe al ser derrotado (máxima)
+
+# función para crear el jefe y la pared asociada
+def crear_boss_y_pared():
+    global boss, wall
+    # crear Jefe (usa la clase importada). Ajusta tamaño/posición si es necesario.
+    boss = Jefe(6980, ALTURA_VENTANA - 200, required_power=boss_required_power, reward_power=boss_reward_power, w=120, h=160)
+    # la pared queda justo a la derecha del boss y se extiende hasta el portal
+    width = max(300, portal_rect.left - boss.rect.right)
+    wall = ParedDivisible(x=boss.rect.right, width=width)
+
+# crear al inicio
+crear_boss_y_pared()
 
 # ENEMIGOS 
 enemigos = pygame.sprite.Group()
 spawn_timer = 0
 
 # FONDO
-fondo = pygame.image.load("imagenes/Background.png").convert()
+
+# Carpeta actual del archivo donde está este código
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Ruta a la carpeta de imágenes
+IMG_DIR = os.path.join(BASE_DIR, "imagenes")
+
+# Ruta final al archivo
+background_path = os.path.join(IMG_DIR, "Background.png")
+
+
+fondo = pygame.image.load(background_path).convert()
 ancho_fondo, alto_fondo = fondo.get_size()
 
 #  JUGADOR Y CÁMARA 
@@ -361,88 +387,117 @@ while running:
                     interacted = False
                     for c in cofres:
                         if jugador_world.colliderect(c.rect.inflate(24,24)) and not c.abierto:
-                            # Cofres de tipo mínimo / gema / vida (existentes)
-                            if c.tipo == 'minimo':
-                                mn = jugador.gemas.minimo()
-                                if mn:
+                            if jugador.gemas.minimo() is None:
+                                agregar_mensaje("Necesitas al menos una gema para abrir el cofre", 1800)
+                            else:
+                                if c.tipo == 'minimo':
+                                    mn = jugador.gemas.minimo()
                                     c.abierto = True; jugador.puntos += 10
                                     agregar_mensaje(f'Cofre abierto con gema mínima {mn[1]}', 1800)
+
+                                elif c.tipo == 'gema':
+                                    if jugador.gemas.buscar(c.valor):
+                                        c.abierto = True; jugador.puntos += 20
+                                        agregar_mensaje(f'Cofre abierto con gema {c.valor}', 1600)
+                                    else:
+                                        agregar_mensaje(f'Falta gema {c.valor} para abrir el cofre', 2200)
+
+                                elif c.tipo == 'vida':
+                                    jugador.curar(c.valor); c.abierto = True; jugador.puntos += 15
+
+                                elif c.tipo == 'habilidad':
+                                    habilidad = 'velocidad' if random.random() < 0.5 else 'salto'
+                                    if habilidad == 'velocidad':
+                                        jugador.speed += 1
+                                        agregar_mensaje('Cofre: Velocidad aumentada', 1600)
+                                    else:
+                                        jugador.jump_power += 2
+                                        agregar_mensaje('Cofre: Potencia de salto aumentada', 1600)
+                                    c.abierto = True; jugador.puntos += 12
+
+                                elif c.tipo == 'trampa':
+                                    mx = jugador.gemas.maximo()
+                                    exclude = mx[0] if mx else None
+                                    gp = jugador.gemas.gema_aleatoria(exclude=exclude)
+                                    if gp:
+                                        jugador.gemas.eliminar(gp)
+                                        agregar_mensaje(f'Trampa: perdiste la gema {gp}', 1600)
+                                        jugador.puntos = max(0, jugador.puntos - 5)
+                                    else:
+                                        agregar_mensaje('Trampa: No hay gema para quitar', 1600)
+                                    c.abierto = True
+
                                 else:
-                                    agregar_mensaje('No tienes gemas para abrir este cofre', 1800)
-                            elif c.tipo == 'gema':
-                                if jugador.gemas.buscar(c.valor):
-                                    c.abierto = True; jugador.puntos += 20
-                                    agregar_mensaje(f'Cofre abierto con gema {c.valor}', 1600)
-                                else:
-                                    agregar_mensaje(f'Falta gema {c.valor} para abrir el cofre', 2200)
-                            elif c.tipo == 'vida':
-                                jugador.curar(c.valor); c.abierto = True; jugador.puntos += 15
-                            # ofres que dan habilidades (velocidad/salto)
-                            elif c.tipo == 'habilidad':
-                                # otorgar mejora al jugador 
-                                habilidad = 'velocidad' if random.random() < 0.5 else 'salto'
-                                if habilidad == 'velocidad':
-                                    jugador.speed += 1
-                                    agregar_mensaje('Cofre: Velocidad aumentada', 1600)
-                                else:
-                                    jugador.jump_power += 2
-                                    agregar_mensaje('Cofre: Potencia de salto aumentada', 1600)
-                                c.abierto = True; jugador.puntos += 12
-                            #  cofres trampa quitan una gema aleatoria (excepto la máxima que necesita el portal)
-                            elif c.tipo == 'trampa':
-                                mx = jugador.gemas.maximo()
-                                exclude = mx[0] if mx else None
-                                gp = jugador.gemas.gema_aleatoria(exclude=exclude)
-                                if gp is None:
-                                    agregar_mensaje('Trampa: No hay gema para quitar (solo máxima presente)', 1600)
-                                else:
-                                    jugador.gemas.eliminar(gp)
-                                    agregar_mensaje(f'Trampa: perdiste la gema {gp}', 1600)
-                                    jugador.puntos = max(0, jugador.puntos - 5)
-                                c.abierto = True
+                                    # Cofre sin recompensa
+                                    c.abierto = True
+                                    agregar_mensaje("El cofre está vacío", 1600)
+
                             interacted = True
 
+
                     #  interacción con el jefe 
-                    if jugador.rect.colliderect(boss_rect) and not boss_defeated and not interacted:
-                        # solicitar gema al jugador
-                        requerido = boss_required_power
-                        nodo = jugador.gemas.buscar(requerido)
-                        if nodo:
-                            # se entrega la gema exacta al jefe
-                            jugador.gemas.eliminar(requerido)
-                            # el jefe entrega una gema poderosa como recompensa
-                            jugador.gemas.insertar(boss_reward_power, 'Gema del Jefe', boss_rect.centerx, boss_rect.centery)
-                            boss_defeated = True
-                            agregar_mensaje(f'Jefe derrotado: entregaste gema {requerido} y recibiste Gema del Jefe', 2200)
+                    if jugador.rect.colliderect(boss.rect) and not getattr(boss, 'defeated', False) and not interacted:
+                        # usar el método interact si existe
+                        mensaje = ''
+                        aceptado = False
+                        try:
+                            aceptado, mensaje = boss.interact(jugador)
+                        except Exception:
+                            # fallback a la lógica previa si la clase Jefe no implementa interact de la misma forma
+                            requerido = boss_required_power
+                            nodo = jugador.gemas.buscar(requerido)
+                            if nodo:
+                                jugador.gemas.eliminar(requerido)
+                                jugador.gemas.insertar(boss_reward_power, 'Gema del Jefe', boss.rect.centerx, boss.rect.centery)
+                                aceptado = True
+                                mensaje = f'Jefe derrotado: entregaste gema {requerido} y recibiste Gema del Jefe'
+
+                            else:
+                                suc = jugador.gemas.sucesor(requerido)
+                                pre = jugador.gemas.predecesor(requerido)
+                                elegido = None
+                                if suc and pre:
+                                    elegido = suc if abs(suc[0]-requerido) <= abs(pre[0]-requerido) else pre
+                                else:
+                                    elegido = suc or pre
+                                if elegido:
+                                    jugador.gemas.eliminar(elegido[0])
+                                    jugador.gemas.insertar(boss_reward_power, 'Gema del Jefe', boss.rect.centerx, boss.rect.centery)
+                                    aceptado = True
+                                    mensaje = f'Jefe aceptó gema {elegido[0]} y entregó Gema del Jefe'
+                                else:
+                                    aceptado = False
+                                    mensaje = 'Jefe: No tienes gemas para entregarme'
+
+                        if aceptado:
+                            try:
+                                boss.defeated = True
+                            except Exception:
+                                pass
+                            agregar_mensaje(mensaje, 2200)
+                            try:
+                                wall.start_opening()
+                            except Exception:
+                                pass
+
+                            boss.defeated = True
+                            boss.rect.x = -9999  # lo sacamos de pantalla
+                            boss.rect.y = -9999
+                           
                         else:
-                            # dar la gema más cercana (sucesor o predecesor)
-                            suc = jugador.gemas.sucesor(requerido)
-                            pre = jugador.gemas.predecesor(requerido)
-                            elegido = None
-                            if suc and pre:
-                                # elegir la más cercana por diferencia de poder
-                                elegido = suc if abs(suc[0]-requerido) <= abs(pre[0]-requerido) else pre
-                            else:
-                                elegido = suc or pre
-                            if elegido:
-                                jugador.gemas.eliminar(elegido[0])
-                                jugador.gemas.insertar(boss_reward_power, 'Gema del Jefe', boss_rect.centerx, boss_rect.centery)
-                                boss_defeated = True
-                                agregar_mensaje(f'Jefe aceptó gema {elegido[0]} y entregó Gema del Jefe', 2200)
-                            else:
-                                agregar_mensaje('Jefe: No tienes gemas para entregarme', 1800)
+                            agregar_mensaje(mensaje, 1800)
                         interacted = True
-                    # Portal 
+
+                    # Portal: ahora requiere la gema que entrega el jefe (boss_reward_power)
                     if jugador.rect.colliderect(portal_rect) and not interacted:
-                        mx = jugador.gemas.maximo()
-                        if mx:
-                            # consumir gema máxima y declarar victoria
-                            jugador.gemas.eliminar(mx[0])
-                            agregar_mensaje(f'Usaste gema máxima {mx[1]} en el portal. ¡Victoria!', 2500)
+                        required = getattr(boss, 'reward_power', boss_reward_power)
+                        if jugador.gemas.buscar(required):
+                            jugador.gemas.eliminar(required)
+                            agregar_mensaje(f'Usaste la Gema del Jefe en el portal. ¡Victoria!', 2500)
                             jugador.puntos += 100
                             estado = GAME_OVER
                         else:
-                            agregar_mensaje('Necesitas una gema para usar el portal', 1500)
+                            agregar_mensaje('El portal requiere la Gema del Jefe para activarse', 1500)
                 if evento.key == pygame.K_ESCAPE:
                     estado = PAUSA
 
@@ -479,6 +534,19 @@ while running:
 
     # actualizar cámara primero 
     camara.actualizar(jugador.rect)
+
+    # bloqueo físico: si la pared está cerrada, evitar que el jugador pase
+    try:
+        if wall.closed:
+            # si el jugador intenta cruzar la pared, empújalo hacia atrás
+            if jugador.rect.right > wall.left:
+                jugador.rect.right = wall.left
+                try:
+                    jugador.vx = 0
+                except Exception:
+                    pass
+    except NameError:
+        pass
 
     # caída fuera del mapa
     if jugador.rect.top > ALTURA_VENTANA + 300:
@@ -569,7 +637,7 @@ while running:
     if jugador.rect.right > MAPA_ANCHO: jugador.rect.right = MAPA_ANCHO
 
     #  DIBUJADO 
- 
+    
     for p in grupo_plataformas: PANTALLA.blit(p.image, camara.aplicar(p.rect))
     for c in cofres:
         PANTALLA.blit(c.image, camara.aplicar(c.rect))
@@ -577,9 +645,18 @@ while running:
             txt = FUENTE.render('Abierto', True, BLANCO)
             PANTALLA.blit(txt, camara.aplicar(c.rect).move(0,-18))
     for g in gemas_sprites: PANTALLA.blit(g.image, camara.aplicar(g.rect))
-    # dibujar portal y jefe (bloqueador)
-    pygame.draw.rect(PANTALLA, (80,40,120), camara.aplicar(boss_rect)) if not boss_defeated else None
-    pygame.draw.rect(PANTALLA, (120,200,240), camara.aplicar(portal_rect))
+
+    # dibujar jefe (usa su propio draw)
+    if boss and not getattr(boss, 'defeated', False):
+        try:
+            boss.draw(PANTALLA, camara)
+        except Exception:
+            pygame.draw.rect(PANTALLA, (80,40,120), camara.aplicar(boss.rect))
+    # dibujar portal: cambia apariencia si el jugador tiene la gema del jefe (o si boss ya la entregó)
+    portal_active = jugador.gemas.buscar(getattr(boss, 'reward_power', boss_reward_power)) is not None
+    portal_color = (120,200,240) if portal_active else (70,70,120)
+    pygame.draw.rect(PANTALLA, portal_color, camara.aplicar(portal_rect))
+
     for e in enemigos:
         PANTALLA.blit(e.image, camara.aplicar(e.rect))
         try:
@@ -598,6 +675,12 @@ while running:
         inv = jugador.gemas.listar_inventario()
         dibujar_inventario(PANTALLA, inv, FUENTE)
 
+    # actualizar animación de la pared (si existe) y dibujarla al final para ocultar lo que esté detrás
+    try:
+        wall.update()
+        wall.draw(PANTALLA, camara)
+    except NameError:
+        pass
 
     pygame.display.flip()
 

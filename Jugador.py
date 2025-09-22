@@ -8,10 +8,20 @@ import os
 class Jugador(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
+        # Carpeta actual del archivo donde está este código
+        BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+        # Ruta a la carpeta de imágenes
+        IMG_DIR = os.path.join(BASE_DIR, "Personajes_juego_EDD2")
+
+        # Ruta final al archivo
+        sprites_walk_path = os.path.join(IMG_DIR, "Walk")
+        sprites_death_path = os.path.join(IMG_DIR, "Death")
+
+     
         # Animaciones
-        self.anim_walk = cargar_animacion("Personajes_juego_EDD2/Walk", (40,52))
-        self.anim_death = cargar_animacion("Personajes_juego_EDD2/Death", (40,52))
+        self.anim_walk = cargar_animacion(sprites_walk_path, (40,52))
+        self.anim_death = cargar_animacion(sprites_death_path, (40,52))
 
         self.frame_index = 0
         self.image = self.anim_walk[self.frame_index]
@@ -119,7 +129,7 @@ class Jugador(pygame.sprite.Sprite):
         if self.invulnerable_timer > 0:
             return
         self.vidas -= cantidad
-        self.invulnerable_timer = FPS
+        self.invulnerable_timer = FPS + 10
         
         agregar_mensaje(f'Has recibido {cantidad} de daño', 1500)
 

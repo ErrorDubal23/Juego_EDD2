@@ -1,37 +1,77 @@
-import pygame
-import random
+import pygame, random, math
 from Configuraciones import *
 
 class Enemigo(pygame.sprite.Sprite):
-    def __init__(self, x,y, min_x, max_x, dano=1):
+    def __init__(self, x, y, min_x=None, max_x=None, dano=1):
         super().__init__()
-        self.image = pygame.Surface((34,40))
-        self.image.fill((200,40,40))
-        self.rect = self.image.get_rect(topleft=(x,y))
+        self.radio = 20
+        self.base_image = pygame.Surface((self.radio*2, self.radio*2), pygame.SRCALPHA)
 
-        self.vx = random.choice([-1.2,1.2])
+        # -------- cuerpo circular --------
+        pygame.draw.circle(self.base_image, (200, 40, 40), (self.radio, self.radio), self.radio)
+        pygame.draw.circle(self.base_image, (80, 0, 0), (self.radio, self.radio), self.radio, 3)
+
+        # -------- cara malvada --------
+        eye_radius = 4
+        pygame.draw.circle(self.base_image, (0,0,0), (self.radio-6, self.radio-4), eye_radius)
+        pygame.draw.circle(self.base_image, (0,0,0), (self.radio+6, self.radio-4), eye_radius)
+        pygame.draw.line(self.base_image, (0,0,0), (self.radio-10, self.radio-10), (self.radio-2, self.radio-6), 2)
+        pygame.draw.line(self.base_image, (0,0,0), (self.radio+2, self.radio-6), (self.radio+10, self.radio-10), 2)
+        pygame.draw.arc(self.base_image, (0,0,0), (self.radio-8, self.radio+2, 16, 10), math.pi, 2*math.pi, 2)
+
+        self.image = self.base_image.copy()
+        self.rect = self.image.get_rect(center=(x, y))
+
+        # -------- movimiento --------
+        self.vx = random.choice([-2, 2])  # más rápido
         self.vy = 0
         self.en_suelo = False
+        self.angulo = 0
 
-        self.patrulla_min_x = min_x
-        self.patrulla_max_x = max_x
+        # -------- patrulla --------
+        self.spawn_x = x
+        self.patrulla_min_x = min_x if min_x is not None else x - 180
+        self.patrulla_max_x = max_x if max_x is not None else x + 180
 
+        # -------- stats --------
         self.dano = dano
         self.cooldown_ataque = 0
-        self.vida = random.randint(1,3)
+        self.vida = random.randint(2, 4)
 
     def update(self, jugador, plataformas, enemigos):
-        # -------- movimiento básico --------
         centro = self.rect.centerx
-        if abs(centro - jugador.rect.centerx) < 250:
+
+        # -------- comportamiento dinámico --------
+        if abs(centro - jugador.rect.centerx) < 220:
+            # persecución agresiva
             if centro < jugador.rect.centerx:
-                self.rect.x += 1.6
+                self.rect.x += 2.2
+                self.angulo -= 6
             else:
-                self.rect.x -= 1.6
+                self.rect.x -= 2.2
+                self.angulo += 6
+
+            # chance de saltar hacia el jugador
+            if self.en_suelo and random.random() < 0.02:
+                self.vy = -10
         else:
+            # patrullaje dinámico
             self.rect.x += self.vx
+            if self.vx > 0:
+                self.angulo -= 4
+            else:
+                self.angulo += 4
+
             if self.rect.left < self.patrulla_min_x or self.rect.right > self.patrulla_max_x:
                 self.vx *= -1
+
+            # chance de cambiar dirección de la nada
+            if random.random() < 0.005:
+                self.vx *= -1
+
+            # chance de saltar mientras patrulla
+            if self.en_suelo and random.random() < 0.01:
+                self.vy = -8
 
         # -------- gravedad --------
         self.vy += GRAVEDAD
@@ -39,11 +79,11 @@ class Enemigo(pygame.sprite.Sprite):
         self.en_suelo = False
         for p in plataformas:
             if self.rect.colliderect(p.rect):
-                if self.vy > 0:  # caer sobre la plataforma
+                if self.vy > 0:
                     self.rect.bottom = p.rect.top
                     self.vy = 0
                     self.en_suelo = True
-                elif self.vy < 0:  # chocar con el techo
+                elif self.vy < 0:
                     self.rect.top = p.rect.bottom
                     self.vy = 0
 
@@ -60,19 +100,23 @@ class Enemigo(pygame.sprite.Sprite):
         if self.cooldown_ataque > 0:
             self.cooldown_ataque -= 1
 
+        # -------- rotación (rodar) --------
+        self.image = pygame.transform.rotate(self.base_image, self.angulo)
+        self.rect = self.image.get_rect(center=self.rect.center)
+
     def intentar_atacar(self, jugador):
-        if self.cooldown_ataque > 0: 
+        if self.cooldown_ataque > 0:
             return False
         if self.rect.colliderect(jugador.rect):
             jugador.recibir_danio(self.dano)
-            self.cooldown_ataque = FPS
+            self.cooldown_ataque = FPS // 2
             return True
         return False
 
     def draw_barra_vida(self, pantalla, camara_x):
         ancho = self.rect.width
         alto = 5
-        max_vida = 3
+        max_vida = 4
         relleno = max(0, int((self.vida / max_vida) * ancho))
         x = self.rect.x - camara_x
         y = self.rect.y - 8
@@ -80,5 +124,4 @@ class Enemigo(pygame.sprite.Sprite):
         pygame.draw.rect(pantalla, BLANCO, (x, y, ancho, alto), 1)
 
     def muere(self):
-        # posibilidad de soltar algo luego
         self.kill()
