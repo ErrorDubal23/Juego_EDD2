@@ -7,11 +7,9 @@ class Enemigo(pygame.sprite.Sprite):
         self.radio = 20
         self.base_image = pygame.Surface((self.radio*2, self.radio*2), pygame.SRCALPHA)
 
-        # -------- cuerpo circular --------
         pygame.draw.circle(self.base_image, (200, 40, 40), (self.radio, self.radio), self.radio)
         pygame.draw.circle(self.base_image, (80, 0, 0), (self.radio, self.radio), self.radio, 3)
 
-        # -------- cara malvada --------
         eye_radius = 4
         pygame.draw.circle(self.base_image, (0,0,0), (self.radio-6, self.radio-4), eye_radius)
         pygame.draw.circle(self.base_image, (0,0,0), (self.radio+6, self.radio-4), eye_radius)
@@ -22,18 +20,15 @@ class Enemigo(pygame.sprite.Sprite):
         self.image = self.base_image.copy()
         self.rect = self.image.get_rect(center=(x, y))
 
-        # -------- movimiento --------
         self.vx = random.choice([-2, 2])  # más rápido
         self.vy = 0
         self.en_suelo = False
         self.angulo = 0
 
-        # -------- patrulla --------
         self.spawn_x = x
         self.patrulla_min_x = min_x if min_x is not None else x - 180
         self.patrulla_max_x = max_x if max_x is not None else x + 180
 
-        # -------- stats --------
         self.dano = dano
         self.cooldown_ataque = 0
         self.vida = random.randint(2, 4)
@@ -41,9 +36,8 @@ class Enemigo(pygame.sprite.Sprite):
     def update(self, jugador, plataformas, enemigos):
         centro = self.rect.centerx
 
-        # -------- comportamiento dinámico --------
         if abs(centro - jugador.rect.centerx) < 220:
-            # persecución agresiva
+
             if centro < jugador.rect.centerx:
                 self.rect.x += 2.2
                 self.angulo -= 6
@@ -51,11 +45,10 @@ class Enemigo(pygame.sprite.Sprite):
                 self.rect.x -= 2.2
                 self.angulo += 6
 
-            # chance de saltar hacia el jugador
             if self.en_suelo and random.random() < 0.02:
                 self.vy = -10
         else:
-            # patrullaje dinámico
+
             self.rect.x += self.vx
             if self.vx > 0:
                 self.angulo -= 4
@@ -65,15 +58,12 @@ class Enemigo(pygame.sprite.Sprite):
             if self.rect.left < self.patrulla_min_x or self.rect.right > self.patrulla_max_x:
                 self.vx *= -1
 
-            # chance de cambiar dirección de la nada
             if random.random() < 0.005:
                 self.vx *= -1
 
-            # chance de saltar mientras patrulla
             if self.en_suelo and random.random() < 0.01:
                 self.vy = -8
 
-        # -------- gravedad --------
         self.vy += GRAVEDAD
         self.rect.y += self.vy
         self.en_suelo = False
@@ -87,7 +77,6 @@ class Enemigo(pygame.sprite.Sprite):
                     self.rect.top = p.rect.bottom
                     self.vy = 0
 
-        # -------- separación de otros enemigos --------
         for otro in enemigos:
             if otro is not self and self.rect.colliderect(otro.rect):
                 if self.rect.centerx < otro.rect.centerx:
@@ -100,7 +89,6 @@ class Enemigo(pygame.sprite.Sprite):
         if self.cooldown_ataque > 0:
             self.cooldown_ataque -= 1
 
-        # -------- rotación (rodar) --------
         self.image = pygame.transform.rotate(self.base_image, self.angulo)
         self.rect = self.image.get_rect(center=self.rect.center)
 

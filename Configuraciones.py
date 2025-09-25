@@ -1,6 +1,6 @@
 import pygame
 import os 
-# ---------------- CONFIGURACIÓN ----------------
+
 ANCHO_VENTANA, ALTURA_VENTANA = 1100, 640
 FPS = 60
 GRAVEDAD = 0.6
@@ -38,7 +38,7 @@ VICTORIA = 'victoria'
 
 import pygame
 
-# Ícono de vida (corazón)
+# Ícono de vida 
 
 ICONO_VIDA = pygame.Surface((18,18), pygame.SRCALPHA)
 pygame.draw.circle(ICONO_VIDA, (220,20,60), (9,6), 6)
@@ -50,7 +50,6 @@ def cargar_animacion(ruta_carpeta, escala=None):
     for nombre in sorted(os.listdir(ruta_carpeta)):
         if nombre.endswith(".png"):
             img = pygame.image.load(os.path.join(ruta_carpeta, nombre)).convert_alpha()
-            # recorta bordes transparentes
             recorte = img.get_bounding_rect()
             img = img.subsurface(recorte)
             if escala:

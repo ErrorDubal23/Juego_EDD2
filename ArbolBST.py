@@ -3,16 +3,7 @@ from NodoGema import NodoGema
 import random
 
 class ArbolBST:
-    """Árbol binario de búsqueda para gemas. Cada nodo es un NodoGema.
-    API:
-      insertar(poder,nombre,x,y) -> True si insertado, False si ya existe
-      buscar(poder) -> NodoGema o None
-      eliminar(poder) -> True si eliminado, False si no existe
-      inorden(), preorden(), postorden() -> listas de tuplas (poder,nombre)
-      minimo(), maximo() -> (poder,nombre) o None
-      sucesor(poder), predecesor(poder) -> (poder,nombre) o None
-      gema_aleatoria(exclude=None) -> poder o None
-    """
+
     def __init__(self):
         self.root = None
         self.size = 0
@@ -130,8 +121,7 @@ class ArbolBST:
         arr.append(nodo)
         self._to_list_nodes(nodo.right, arr)
 
-    def gema_aleatoria(self, exclude=None):
-        """Devuelve el poder (int) de una gema aleatoria, evitando 'exclude' si es posible."""
+    def gema_aleatoria(self, exclude=None):       
         if self.size == 0:
             return None
         arr = []
@@ -168,7 +158,7 @@ class ArbolBST:
                 return nodo.right, True
             elif nodo.right is None:
                 return nodo.left, True
-            # caso 2 hijos: reemplazar por sucesor (mínimo del subárbol derecho)
+            # caso 2 hijos: reemplazar por sucesor 
             succ = self._min_node(nodo.right)
             nodo.poder, nodo.nombre, nodo.x, nodo.y = succ.poder, succ.nombre, succ.x, succ.y
             nodo.right, _ = self._eliminar_rec(nodo.right, succ.poder)

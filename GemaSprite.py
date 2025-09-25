@@ -30,36 +30,34 @@ class GemaSprite(pygame.sprite.Sprite):
 
         # resplandor alrededor
         glow = pygame.Surface((size*5, size*5), pygame.SRCALPHA)
-        for r in range(40, 0, -8):  # círculos concéntricos con alpha decreciente
+        for r in range(40, 0, -8): 
             alpha = max(20, 200 - r*4)
             pygame.draw.circle(glow, (*color, alpha), (glow.get_width()//2, glow.get_height()//2), r)
         glow_rect = glow.get_rect(center=(cx, cy))
         self.base_image.blit(glow, glow_rect, special_flags=pygame.BLEND_RGBA_ADD)
 
-        # esta imagen será la usada por Pygame
+        
         self.image = self.base_image.copy()
         self.rect = self.image.get_rect(center=(x, y))
 
-        # variables para animar el brillo
+        
         self.t = 0
 
     def update(self):
-        # tiempo acumulado para la animación
+        # tiempo acumulado para la animacion
         self.t += 0.1  
 
-        # escala oscilante con seno (efecto "palpitar")
+        
         scale = 1.0 + 0.05 * math.sin(self.t * 2)
-  # 3 = velocidad del pulso
+
 
         new_size = (
             int(self.base_image.get_width() * scale),
             int(self.base_image.get_height() * scale)
         )
 
-        # reescalar la gema
         scaled = pygame.transform.smoothscale(self.base_image, new_size)
 
-        # mantener centrado el rectángulo
         old_center = self.rect.center
         self.image = scaled
         self.rect = self.image.get_rect(center=old_center)

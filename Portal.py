@@ -9,7 +9,7 @@ class Portal:
         self.active = False  # se activa con la gema del jefe
 
     def update(self, jugador, boss, boss_reward_power):
-        # El portal está activo si el jugador tiene la gema del jefe o si el boss ya fue derrotado
+        # El portal esta activo si el jugador tiene la gema del jefe o si el boss ya fue derrotado
         self.active = jugador.gemas.buscar(getattr(boss, 'reward_power', boss_reward_power)) is not None
 
     def draw(self, pantalla, camara):
@@ -21,15 +21,15 @@ class Portal:
         surface = pygame.Surface((w, h), pygame.SRCALPHA)
 
         if self.active:
-            # Colores vivos: azules/morados/verdes
+            # Colores vivos
             r = int(100 + 80 * math.sin(tiempo))
             g = int(100 + 80 * math.sin(tiempo + 2))
             b = int(150 + 100 * math.cos(tiempo))
         else:
-            # Portal apagado (gris azulado)
+            # Portal apagado y oscuro
             r, g, b = (70, 70, 120)
 
-        # Anillos concéntricos
+        # Anillos 
         num_anillos = 5
         for i in range(num_anillos):
             radio_w = w - i * (w // num_anillos)

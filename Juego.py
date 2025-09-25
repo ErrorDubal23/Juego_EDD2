@@ -11,13 +11,11 @@ from Configuraciones import *
 from Jugador import Jugador
 from GemaSprite import GemaSprite
 from Camara import Camara
-from Estados import *
 import random
 from Plataforma import Plataforma
 from Cofre import Cofre
 from ArbolBST import ArbolBST
 from Eventos import ejecutar_eventos_demo
-from Vidas import *
 from Enemigo import Enemigo
 from Jefe_Muro_Divisible import Jefe, ParedDivisible
 from Portal import Portal

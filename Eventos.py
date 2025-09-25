@@ -1,14 +1,7 @@
 
-# Eventos.py
-# Contiene una lista y función para ejecutar una secuencia de eventos sobre un ArbolBST.
-# Está pensada para demostrar las operaciones requeridas (al menos 20 eventos).
-
 import random
 def ejecutar_eventos_demo(arbol, agregar_mensaje=None):
-    """
-    Ejecuta una serie de ~20 eventos sobre el árbol `arbol`.
-    Si `agregar_mensaje` está provisto, se llamará para mostrar resultados en pantalla.
-    """
+ 
     def log(msg):
         if agregar_mensaje:
             agregar_mensaje(msg, 1200)

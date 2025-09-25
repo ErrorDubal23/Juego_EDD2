@@ -1,10 +1,6 @@
 import pygame
 from Configuraciones import *
 
-
-import math
-import pygame
-
 import math
 import pygame
 
@@ -21,40 +17,36 @@ class Jefe(pygame.sprite.Sprite):
         self.tiempo_inicio = pygame.time.get_ticks()
 
     def actualizar_forma(self):
-        """Hace que el jefe palpite y cambie de color con cara malvada"""
+     
         tiempo = (pygame.time.get_ticks() - self.tiempo_inicio) / 500
         factor = 1 + 0.1 * math.sin(tiempo)  # palpita entre 0.9 y 1.1
         w = int(self.base_w * factor)
         h = int(self.base_h * factor)
 
-        # Superficie con transparencia
         self.image = pygame.Surface((w, h), pygame.SRCALPHA)
 
-        # Color dinámico (amarillo → naranja → rojo)
         r = 200 + int(55 * math.sin(tiempo))     # oscila 200-255
         g = 50 + int(150 * abs(math.cos(tiempo))) # oscila 50-200
         b = 0  # sin azul para mantener la gama cálida
         color = (r, g, b)
 
-        # Dibujar cuerpo ovalado
         pygame.draw.ellipse(self.image, color, (0, 0, w, h))
 
-        # --- Cara malvada ---
-        # Ojos triangulares
+        # ojos triangulares
         eye_w, eye_h = w // 5, h // 6
         ojo_izq = [(w//3 - eye_w, h//3), (w//3, h//3 - eye_h), (w//3 + eye_w//2, h//3)]
         ojo_der = [(2*w//3 + eye_w, h//3), (2*w//3, h//3 - eye_h), (2*w//3 - eye_w//2, h//3)]
         pygame.draw.polygon(self.image, (0, 0, 0), ojo_izq)
         pygame.draw.polygon(self.image, (0, 0, 0), ojo_der)
 
-        # Boca malvada (curva tipo sonrisa invertida)
+        # boca malvada 
         boca_rect = pygame.Rect(w//4, h//2, w//2, h//3)
         pygame.draw.arc(self.image, (0, 0, 0), boca_rect, math.pi*0.1, math.pi*0.9, 4)
 
-        # Aura brillante
+        # aura brillante
         pygame.draw.ellipse(self.image, (255, 200, 0, 100), (5, 5, w-10, h-10), 3)
 
-        # Mantener posición centrada
+        # mantener posición centrada
         centro = self.rect.center
         self.rect = self.image.get_rect(center=centro)
 
@@ -86,12 +78,12 @@ class Jefe(pygame.sprite.Sprite):
         pantalla.blit(self.image, camara.aplicar(self.rect))
         font = pygame.font.SysFont('Consolas', 24, bold=True)
 
-        # Texto arriba del jefe
+        # texto arriba del jefe
         texto_arriba = font.render("Boss", True, (255, 50, 50))
         pos_arriba = texto_arriba.get_rect(center=(self.rect.centerx, self.rect.top - 20))
         pantalla.blit(texto_arriba, camara.aplicar(pos_arriba))
 
-        # Texto abajo del jefe
+        # texto abajo del jefe
         texto_abajo = font.render("Presione E", True, (248, 255, 100))
         pos_abajo = texto_abajo.get_rect(center=(self.rect.centerx, self.rect.bottom + 20))
         pantalla.blit(texto_abajo, camara.aplicar(pos_abajo))
@@ -101,18 +93,17 @@ class Jefe(pygame.sprite.Sprite):
 class ParedDivisible:
    
     def __init__(self, x, width, altura=ALTURA_VENTANA, color=(22, 25, 37), speed=8):
-        # la pared ocupará verticalmente toda la ventana por defecto
+        # la pared ocupara verticalmente toda la ventana por defecto
         self.x = int(x)
         self.width = int(width)
         self.altura = int(altura)
         self.color = color
 
         mitad = self.altura // 2
-        # rects en coordenadas del mundo
+
         self.top_rect = pygame.Rect(self.x, 0, self.width, mitad)
         self.bottom_rect = pygame.Rect(self.x, mitad, self.width, self.altura - mitad)
 
-        # objetivos para la animación: la parte superior sube 'mitad' y la inferior baja 'mitad'
         self.top_target_y = -mitad
         self.bottom_target_y = self.altura
 
@@ -155,7 +146,6 @@ class ParedDivisible:
         pygame.draw.rect(pantalla, self.color, camara.aplicar(self.bottom_rect))
 
     def colliderect(self, rect):
-        """Devuelve True si el rect del jugador colisiona con alguna mitad y la pared está cerrada."""
         if not self.closed:
             return False
         return rect.colliderect(self.top_rect) or rect.colliderect(self.bottom_rect)
