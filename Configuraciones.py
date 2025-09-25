@@ -13,8 +13,8 @@ MAX_ENEMIGOS_EN_PANTALLA = 5
 ENEMY_SPAWN_COOLDOWN = FPS * 2
 
 pygame.init()
-FUENTE = pygame.font.SysFont('Consolas', 18)
-PANTALLA = pygame.display.set_mode((ANCHO_VENTANA, ALTURA_VENTANA))
+FUENTE = pygame.font.SysFont('Consolas', 20, bold=True)
+PANTALLA = pygame.display.set_mode((ANCHO_VENTANA , ALTURA_VENTANA ))
 pygame.display.set_caption('Bosque Ancestral - Versión Completa')
 RELOJ = pygame.time.Clock()
 
@@ -34,6 +34,7 @@ MENU = 'menu'
 JUGANDO = 'jugando'
 PAUSA = 'pausa'
 GAME_OVER = 'game_over'
+VICTORIA = 'victoria'
 
 import pygame
 

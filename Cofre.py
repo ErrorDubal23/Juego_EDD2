@@ -21,6 +21,15 @@ class Cofre(pygame.sprite.Sprite):
         # Para efecto de brillo animado
         self.glow_phase = 0
 
+        # superficie de brillo
+        glow_size = max(self.width, self.height) * 3
+        self.glow = pygame.Surface((glow_size, glow_size), pygame.SRCALPHA)
+        cx, cy = glow_size//2, glow_size//2
+        for r in range(glow_size//2, 0, -10):
+            alpha = max(20, 180 - r*3)
+            pygame.draw.circle(self.glow, (255, 255, 150, alpha), (cx, cy), r)
+        self.glow_rect = self.glow.get_rect(center=self.rect.center)
+
     def _dibujar_cofre(self, surface):
         w, h = self.width, self.height
 
@@ -42,6 +51,44 @@ class Cofre(pygame.sprite.Sprite):
         lock_rect = pygame.Rect(w//2 - 4, h//2, 8, 10)
         pygame.draw.rect(surface, (80, 80, 80), lock_rect)
         pygame.draw.circle(surface, (30, 30, 30), lock_rect.center, 2)
+
+
+    def update(self):
+        old_center = self.rect.center  # guardar siempre la posición real
+
+        if self.abierto:
+            # Solo mostrar el cofre sin brillo
+            self.image = self.base_image.copy()
+            self.rect = self.image.get_rect(center=old_center)  # mantener posición fija
+            return
+
+        self.t += 0.05
+        scale = 1.0 + 0.08 * math.sin(self.t * 2)  # animación suave del glow
+        size = int(self.glow.get_width() * scale)
+        glow_scaled = pygame.transform.smoothscale(self.glow, (size, size))
+
+        # crear superficie con glow + cofre en el centro
+        final = pygame.Surface((size, size), pygame.SRCALPHA)
+
+        # dibujar glow en el centro
+        glow_rect = glow_scaled.get_rect(center=(size//2, size//2))
+        final.blit(glow_scaled, glow_rect)
+
+        # dibujar cofre en el centro (NO escalado)
+        cofre_rect = self.base_image.get_rect(center=(size//2, size//2))
+        final.blit(self.base_image, cofre_rect)
+
+        # actualizar la imagen pero mantener el centro fijo
+        self.image = final
+        self.rect = self.image.get_rect(center=old_center)
+
+
+
+
+
+
+
+
 
     
 

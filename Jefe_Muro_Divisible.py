@@ -2,57 +2,105 @@ import pygame
 from Configuraciones import *
 
 
+import math
+import pygame
+
+import math
+import pygame
+
 class Jefe(pygame.sprite.Sprite):
-   
     def __init__(self, x, y, required_power=120, reward_power=999, w=120, h=160):
         super().__init__()
-        self.image = pygame.Surface((w, h))
-        # color por defecto — puedes reemplazar esta surface por un sprite más adelante
-        self.image.fill((80, 40, 120))
+        self.base_w, self.base_h = w, h
+        self.image = pygame.Surface((w, h), pygame.SRCALPHA)  # con transparencia
         self.rect = self.image.get_rect(topleft=(x, y))
 
         self.required_power = int(required_power)
         self.reward_power = int(reward_power)
         self.defeated = False
+        self.tiempo_inicio = pygame.time.get_ticks()
+
+    def actualizar_forma(self):
+        """Hace que el jefe palpite y cambie de color con cara malvada"""
+        tiempo = (pygame.time.get_ticks() - self.tiempo_inicio) / 500
+        factor = 1 + 0.1 * math.sin(tiempo)  # palpita entre 0.9 y 1.1
+        w = int(self.base_w * factor)
+        h = int(self.base_h * factor)
+
+        # Superficie con transparencia
+        self.image = pygame.Surface((w, h), pygame.SRCALPHA)
+
+        # Color dinámico (amarillo → naranja → rojo)
+        r = 200 + int(55 * math.sin(tiempo))     # oscila 200-255
+        g = 50 + int(150 * abs(math.cos(tiempo))) # oscila 50-200
+        b = 0  # sin azul para mantener la gama cálida
+        color = (r, g, b)
+
+        # Dibujar cuerpo ovalado
+        pygame.draw.ellipse(self.image, color, (0, 0, w, h))
+
+        # --- Cara malvada ---
+        # Ojos triangulares
+        eye_w, eye_h = w // 5, h // 6
+        ojo_izq = [(w//3 - eye_w, h//3), (w//3, h//3 - eye_h), (w//3 + eye_w//2, h//3)]
+        ojo_der = [(2*w//3 + eye_w, h//3), (2*w//3, h//3 - eye_h), (2*w//3 - eye_w//2, h//3)]
+        pygame.draw.polygon(self.image, (0, 0, 0), ojo_izq)
+        pygame.draw.polygon(self.image, (0, 0, 0), ojo_der)
+
+        # Boca malvada (curva tipo sonrisa invertida)
+        boca_rect = pygame.Rect(w//4, h//2, w//2, h//3)
+        pygame.draw.arc(self.image, (0, 0, 0), boca_rect, math.pi*0.1, math.pi*0.9, 4)
+
+        # Aura brillante
+        pygame.draw.ellipse(self.image, (255, 200, 0, 100), (5, 5, w-10, h-10), 3)
+
+        # Mantener posición centrada
+        centro = self.rect.center
+        self.rect = self.image.get_rect(center=centro)
 
     def interact(self, jugador):
-        
         if self.defeated:
-            return (False, 'Jefe ya está satisfecho')
+            return (False, 'El Jefe ya ha sido vencido...')
 
         requerido = self.required_power
         nodo = jugador.gemas.buscar(requerido)
         if nodo:
-            
             jugador.gemas.eliminar(requerido)
             jugador.gemas.insertar(self.reward_power, 'Gema del Jefe', self.rect.centerx, self.rect.centery)
             self.defeated = True
-            return (True, f'Jefe derrotado: entregaste gema {requerido} y recibiste Gema del Jefe')
+            return (True, f'¡Has derrotado al Jefe! Entregaste {requerido} y recibiste la Gema del Jefe')
         else:
             suc = jugador.gemas.sucesor(requerido)
             pre = jugador.gemas.predecesor(requerido)
-            elegido = None
-            
-            if suc and pre:
-                elegido = suc if abs(suc[0] - requerido) < abs(pre[0] - requerido) else pre
-            else:
-                elegido = suc or pre
-
+            elegido = suc if suc and (not pre or abs(suc[0]-requerido) < abs(pre[0]-requerido)) else pre
             if elegido:
                 jugador.gemas.eliminar(elegido[0])
                 jugador.gemas.insertar(self.reward_power, 'Gema del Jefe', self.rect.centerx, self.rect.centery)
                 self.defeated = True
-                return (True, f'Jefe aceptó gema {elegido[0]} y entregó Gema del Jefe')
+                return (True, f'El Jefe aceptó {elegido[0]} y te dio la Gema del Jefe')
             else:
                 return (False, 'Jefe: No tienes gemas para entregarme')
 
     def draw(self, pantalla, camara):
+        self.actualizar_forma()
         pantalla.blit(self.image, camara.aplicar(self.rect))
+        font = pygame.font.SysFont('Consolas', 24, bold=True)
+
+        # Texto arriba del jefe
+        texto_arriba = font.render("Boss", True, (255, 50, 50))
+        pos_arriba = texto_arriba.get_rect(center=(self.rect.centerx, self.rect.top - 20))
+        pantalla.blit(texto_arriba, camara.aplicar(pos_arriba))
+
+        # Texto abajo del jefe
+        texto_abajo = font.render("Presione E", True, (248, 255, 100))
+        pos_abajo = texto_abajo.get_rect(center=(self.rect.centerx, self.rect.bottom + 20))
+        pantalla.blit(texto_abajo, camara.aplicar(pos_abajo))
+
 
 
 class ParedDivisible:
    
-    def __init__(self, x, width, altura=ALTURA_VENTANA, color=(30, 30, 30), speed=8):
+    def __init__(self, x, width, altura=ALTURA_VENTANA, color=(22, 25, 37), speed=8):
         # la pared ocupará verticalmente toda la ventana por defecto
         self.x = int(x)
         self.width = int(width)
@@ -77,7 +125,7 @@ class ParedDivisible:
             self.opening = True
 
     def update(self):
-        """Animar apertura si corresponde."""
+        
         if not self.opening:
             return
 

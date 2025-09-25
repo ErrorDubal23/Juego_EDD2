@@ -43,4 +43,25 @@ class GemaSprite(pygame.sprite.Sprite):
         # variables para animar el brillo
         self.t = 0
 
+    def update(self):
+        # tiempo acumulado para la animación
+        self.t += 0.1  
+
+        # escala oscilante con seno (efecto "palpitar")
+        scale = 1.0 + 0.05 * math.sin(self.t * 2)
+  # 3 = velocidad del pulso
+
+        new_size = (
+            int(self.base_image.get_width() * scale),
+            int(self.base_image.get_height() * scale)
+        )
+
+        # reescalar la gema
+        scaled = pygame.transform.smoothscale(self.base_image, new_size)
+
+        # mantener centrado el rectángulo
+        old_center = self.rect.center
+        self.image = scaled
+        self.rect = self.image.get_rect(center=old_center)
+
     
