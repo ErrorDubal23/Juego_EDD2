@@ -165,7 +165,6 @@ class ArbolBST:
         return nodo, deleted
 
     def sucesor(self, poder):
-        """Devuelve (poder,nombre) del sucesor inmediato de 'poder' o None."""
         # generar lista inorden y buscar el siguiente
         arr = self.inorden()
         for i, (p, n) in enumerate(arr):
